@@ -280,6 +280,11 @@ class ConvLEMWildfire(nn.Module):
         Returns:
             logits: Binary classification logits (batch, num_counties)
         """
+        # Handle dictionary input from graph_collate
+        if isinstance(x, dict):
+            adjacency = x.get("adj", adjacency)
+            x = x["x"]
+
         B, T, N, F = x.shape
         
         # Validate input dimensions
@@ -386,27 +391,3 @@ def convlem_wildfire_builder(
 
 
 __all__ = ["ConvLEMWildfire", "convlem_wildfire_builder"]
-
-"""
-from pyhazards.models import build_model
-import torch
-
-# Build model
-model = build_model("convlem_wildfire",task="classification",in_dim=12,num_counties=58,past_days=8,)
-
-# Test forward pass
-x = torch.randn(4, 8, 58, 12)
-adj = torch.rand(58, 58)
-
-logits = model(x, adjacency=adj)
-print(f"✓ Forward pass works! Output shape: {logits.shape}")
-
-# Test with sigmoid
-probs = torch.sigmoid(logits)
-print(f"✓ Probabilities shape: {probs.shape}")
-print(f"✓ Probability range: [{probs.min():.3f}, {probs.max():.3f}]")
-
-# Count parameters
-total_params = sum(p.numel() for p in model.parameters())
-print(f"✓ Total parameters: {total_params:,}")
-"""
