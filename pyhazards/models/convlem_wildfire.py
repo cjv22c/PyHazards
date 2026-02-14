@@ -88,13 +88,19 @@ class GraphConvLEMCell(nn.Module):
     
     def forward(
         self,
-        x: torch.Tensor,    # Input features (B, N, in_channels)
-        y: torch.Tensor,    # Hidden state (B, N, out_channels)
-        z: torch.Tensor,    # Memory state (B, N, out_channels)
-        adj: Optional[torch.Tensor] = None, # Optional adjacency matrix (B, N, N) or (N, N)
+        x: torch.Tensor,
+        y: torch.Tensor,
+        z: torch.Tensor,
+        adj: Optional[torch.Tensor] = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass.    
+        Forward pass.
+        Args:
+             - x: Input features (B, N, in_channels)
+             - y: Hidden state (B, N, out_channels)
+             - z: Memory state (B, N, out_channels)
+             - adj: Optional adjacency matrix (B, N, N) or (N, N)
+        
         Returns tuple of (y_new, z_new)
         """
         B, N, _ = x.shape
