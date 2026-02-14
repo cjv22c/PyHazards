@@ -149,7 +149,25 @@ class GraphConvLEMCell(nn.Module):
 
 class ConvLEMWildfire(nn.Module):
     """
-    ConvLEM-based wildfire prediction model
+    ConvLEM-based wildfire prediction model for county-level data.
+    
+    Architecture:
+    1. Input Embedding: Linear projection to hidden_dim
+    2. Encoder: Stack of GraphConvLEM layers processing past_days sequence
+    3. Decoder: Stack of GraphConvLEM layers generating next-day prediction
+    4. Output Projection: Linear layers mapping to binary classification logits
+    
+    Args:
+        in_dim: Number of input features per county per day
+        num_counties: Number of counties (graph nodes)
+        past_days: Number of historical days to process
+        hidden_dim: Hidden state dimension (default: 144)
+        num_layers: Number of ConvLEM encoder/decoder layer pairs (default: 2)
+        dt: Time step parameter for LEM mechanism (default: 1.0)
+        activation: Activation function - 'tanh' or 'relu' (default: 'tanh')
+        use_reset_gate: Whether to use reset gate variant (default: False)
+        dropout: Dropout rate (default: 0.1)
+        adjacency: Optional fixed adjacency matrix (N, N)
     """
     
     def __init__(
@@ -173,23 +191,98 @@ class ConvLEMWildfire(nn.Module):
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         
-        # Placeholder: just a simple linear layer for now
-        self.placeholder = nn.Linear(in_dim, 1)
+        # Input embedding
+        self.input_embed = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+        )
+        
+        # Encoder layers
+        self.encoder_layers = nn.ModuleList([
+            GraphConvLEMCell(
+                in_channels=hidden_dim,
+                out_channels=hidden_dim,
+                num_counties=num_counties,
+                dt=dt,
+                activation=activation,
+                use_reset_gate=use_reset_gate,
+            )
+            for _ in range(num_layers)
+        ])
+        
+        # Decoder layers
+        self.decoder_layers = nn.ModuleList([
+            GraphConvLEMCell(
+                in_channels=hidden_dim,
+                out_channels=hidden_dim,
+                num_counties=num_counties,
+                dt=dt,
+                activation=activation,
+                use_reset_gate=use_reset_gate,
+            )
+            for _ in range(num_layers)
+        ])
+        
+        # Output projection
+        self.output_proj = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, 1),
+        )
+        
+        self.dropout = nn.Dropout(dropout)
+        
+        # Register adjacency matrix as buffer
+        self.register_buffer("_adjacency", None)
+        if adjacency is not None:
+            self.set_adjacency(adjacency)
     
-    def forward(self, x: torch.Tensor, adjacency: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def set_adjacency(self, adj: torch.Tensor) -> None:
+        """Set or override the spatial adjacency matrix."""
+        adj = _normalize_adjacency(adj.detach())
+        self._adjacency = adj
+    
+    def _get_adjacency(self, batch_size: int) -> torch.Tensor:
+        """Get normalized adjacency matrix, defaulting to identity if not set."""
+        if self._adjacency is None:
+            # Use identity (no spatial interaction) as fallback
+            eye = torch.eye(
+                self.num_counties,
+                device=next(self.parameters()).device
+            )
+            adj = _normalize_adjacency(eye)
+        else:
+            adj = self._adjacency
+        
+        # Expand to batch dimension if needed
+        if adj.dim() == 2:
+            adj = adj.unsqueeze(0)
+        if adj.size(0) == 1 and batch_size > 1:
+            adj = adj.expand(batch_size, -1, -1)
+        
+        return adj
+    
+    def forward(
+        self,
+        x: torch.Tensor,
+        adjacency: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         """
-        Minimal forward pass.
+        Forward pass.
         
         Args:
-            x: (batch, past_days, num_counties, in_dim)
-            adjacency: Optional adjacency matrix
-            
+            x: Input tensor (batch, past_days, num_counties, in_dim)
+            adjacency: Optional adjacency override (N, N) or (B, N, N)
+        
         Returns:
-            logits: (batch, num_counties)
+            logits: Binary classification logits (batch, num_counties)
         """
         B, T, N, F = x.shape
         
-        # Validate shapes
+        # Validate input dimensions
         if T != self.past_days:
             raise ValueError(f"Expected past_days={self.past_days}, got {T}")
         if N != self.num_counties:
@@ -197,12 +290,72 @@ class ConvLEMWildfire(nn.Module):
         if F != self.in_dim:
             raise ValueError(f"Expected in_dim={self.in_dim}, got {F}")
         
-        # Placeholder forward: just use last timestep
-        last_step = x[:, -1, :, :]  # (B, N, F)
-        logits = self.placeholder(last_step).squeeze(-1)  # (B, N)
+        # Get adjacency matrix
+        adj = (
+            _normalize_adjacency(adjacency)
+            if adjacency is not None
+            else self._get_adjacency(B)
+        )
+        
+        # Embed input features
+        x = x.view(B * T, N, F)
+        x = self.input_embed(x)
+        x = x.view(B, T, N, self.hidden_dim)
+        
+        # Initialize encoder states
+        device = x.device
+        encoder_h = [
+            torch.zeros(B, N, self.hidden_dim, device=device)
+            for _ in range(self.num_layers)
+        ]
+        encoder_z = [
+            torch.zeros(B, N, self.hidden_dim, device=device)
+            for _ in range(self.num_layers)
+        ]
+        
+        # Encoder: Process temporal sequence
+        for t in range(T):
+            x_t = x[:, t, :, :]  # (B, N, hidden_dim)
+            
+            for i, layer in enumerate(self.encoder_layers):
+                if i == 0:
+                    h_in = x_t
+                else:
+                    h_in = encoder_h[i - 1]
+                
+                encoder_h[i], encoder_z[i] = layer(
+                    h_in,
+                    encoder_h[i],
+                    encoder_z[i],
+                    adj=adj,
+                )
+        
+        # Initialize decoder states from encoder
+        decoder_h = [h.clone() for h in encoder_h]
+        decoder_z = [z.clone() for z in encoder_z]
+        
+        # Decoder: Single-step prediction
+        encoder_vector = encoder_h[-1]  # (B, N, hidden_dim)
+        
+        for i, layer in enumerate(self.decoder_layers):
+            if i == 0:
+                h_in = encoder_vector
+            else:
+                h_in = decoder_h[i - 1]
+            
+            decoder_h[i], decoder_z[i] = layer(
+                h_in,
+                decoder_h[i],
+                decoder_z[i],
+                adj=adj,
+            )
+        
+        # Output projection
+        output = decoder_h[-1]  # (B, N, hidden_dim)
+        output = self.dropout(output)
+        logits = self.output_proj(output).squeeze(-1)  # (B, N)
         
         return logits
-
 
 def convlem_wildfire_builder(
     task: str,
@@ -235,16 +388,25 @@ def convlem_wildfire_builder(
 __all__ = ["ConvLEMWildfire", "convlem_wildfire_builder"]
 
 """
-from pyhazards.models.convlem_wildfire import GraphConvLEMCell, _normalize_adjacency
+from pyhazards.models import build_model
 import torch
 
-# Test the cell
-cell = GraphConvLEMCell(in_channels=12, out_channels=64, num_counties=58)
-x = torch.randn(4, 58, 12)
-y = torch.zeros(4, 58, 64)
-z = torch.zeros(4, 58, 64)
+# Build model
+model = build_model("convlem_wildfire",task="classification",in_dim=12,num_counties=58,past_days=8,)
+
+# Test forward pass
+x = torch.randn(4, 8, 58, 12)
 adj = torch.rand(58, 58)
 
-y_new, z_new = cell(x, y, z, adj)
-print(f"✓ GraphConvLEMCell works! Output shapes: {y_new.shape}, {z_new.shape}")
+logits = model(x, adjacency=adj)
+print(f"✓ Forward pass works! Output shape: {logits.shape}")
+
+# Test with sigmoid
+probs = torch.sigmoid(logits)
+print(f"✓ Probabilities shape: {probs.shape}")
+print(f"✓ Probability range: [{probs.min():.3f}, {probs.max():.3f}]")
+
+# Count parameters
+total_params = sum(p.numel() for p in model.parameters())
+print(f"✓ Total parameters: {total_params:,}")
 """
