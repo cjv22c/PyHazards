@@ -27,12 +27,12 @@ class GraphConvLEMCell(nn.Module):
     Graph-adapted ConvLEM cell for county-level temporal predictions.
     
     Args:
-        in_channels: Input feature dimension
-        out_channels: Hidden/memory state dimension
-        num_counties: Number of graph nodes (counties)
-        dt: Time step parameter for memory integration (default: 1.0)
-        activation: Activation function - 'tanh' or 'relu' (default: 'tanh')
-        use_reset_gate: Whether to use reset gate variant (default: False)
+        - in_channels: Input feature dimension
+        - out_channels: Hidden/memory state dimension
+        - num_counties: Number of graph nodes (counties)
+        - dt: Time step parameter for memory integration (default: 1.0)
+        - activation: Activation function - 'tanh' or 'relu' (default: 'tanh')
+        - use_reset_gate: Whether to use reset gate variant (default: False)
     """
     
     def __init__(
@@ -88,22 +88,14 @@ class GraphConvLEMCell(nn.Module):
     
     def forward(
         self,
-        x: torch.Tensor,
-        y: torch.Tensor,
-        z: torch.Tensor,
-        adj: Optional[torch.Tensor] = None,
+        x: torch.Tensor,    # Input features (B, N, in_channels)
+        y: torch.Tensor,    # Hidden state (B, N, out_channels)
+        z: torch.Tensor,    # Memory state (B, N, out_channels)
+        adj: Optional[torch.Tensor] = None, # Optional adjacency matrix (B, N, N) or (N, N)
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass.
-        
-        Args:
-            x: Input features (B, N, in_channels)
-            y: Hidden state (B, N, out_channels)
-            z: Memory state (B, N, out_channels)
-            adj: Optional adjacency matrix (B, N, N) or (N, N)
-        
-        Returns:
-            Tuple of (y_new, z_new)
+        Forward pass.    
+        Returns tuple of (y_new, z_new)
         """
         B, N, _ = x.shape
         
@@ -151,25 +143,8 @@ class ConvLEMWildfire(nn.Module):
     """
     ConvLEM-based wildfire prediction model for county-level data.
     
-    Architecture:
-    1. Input Embedding: Linear projection to hidden_dim
-    2. Encoder: Stack of GraphConvLEM layers processing past_days sequence
-    3. Decoder: Stack of GraphConvLEM layers generating next-day prediction
-    4. Output Projection: Linear layers mapping to binary classification logits
-    
-    Args:
-        in_dim: Number of input features per county per day
-        num_counties: Number of counties (graph nodes)
-        past_days: Number of historical days to process
-        hidden_dim: Hidden state dimension (default: 144)
-        num_layers: Number of ConvLEM encoder/decoder layer pairs (default: 2)
-        dt: Time step parameter for LEM mechanism (default: 1.0)
-        activation: Activation function - 'tanh' or 'relu' (default: 'tanh')
-        use_reset_gate: Whether to use reset gate variant (default: False)
-        dropout: Dropout rate (default: 0.1)
-        adjacency: Optional fixed adjacency matrix (N, N)
+    input embedding -> encoder -> decoder -> output projection
     """
-    
     def __init__(
         self,
         in_dim: int,
@@ -267,18 +242,12 @@ class ConvLEMWildfire(nn.Module):
     
     def forward(
         self,
-        x: torch.Tensor,
-        adjacency: Optional[torch.Tensor] = None,
+        x: torch.Tensor, # Input tensor (batch, past_days, num_counties, in_dim)
+        adjacency: Optional[torch.Tensor] = None, # Optional adjacency override (N, N) or (B, N, N)
     ) -> torch.Tensor:
         """
-        Forward pass.
-        
-        Args:
-            x: Input tensor (batch, past_days, num_counties, in_dim)
-            adjacency: Optional adjacency override (N, N) or (B, N, N)
-        
-        Returns:
-            logits: Binary classification logits (batch, num_counties)
+        Forward pass. 
+        Returns logits: Binary classification logits (batch, num_counties)
         """
         # Handle dictionary input from graph_collate
         if isinstance(x, dict):
