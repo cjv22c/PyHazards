@@ -2,6 +2,13 @@ import torch
 from pyhazards.datasets import GraphTemporalDataset, graph_collate, DataBundle, DataSplit, FeatureSpec, LabelSpec
 from pyhazards.engine import Trainer
 from pyhazards.models import build_model
+from pyhazards.models.convlem_metrics import (
+    WildfireAccuracy,
+    WildfirePrecision,
+    WildfireRecall,
+    WildfireF1Score,
+    CountyRiskCoverage,
+)
 
 # Setup
 past_days, counties, feats, samples = 8, 58, 12, 64
@@ -10,7 +17,7 @@ past_days, counties, feats, samples = 8, 58, 12, 64
 x = torch.randn(samples, past_days, counties, feats)
 y = torch.randint(0, 2, (samples, counties)).float()
 adj = torch.rand(counties, counties)
-adj = (adj + adj.t()) / 2  # Make symmetric
+adj = (adj + adj.t()) / 2
 
 # Create datasets
 train_ds = GraphTemporalDataset(x[:48], y[:48], adjacency=adj)
@@ -33,29 +40,29 @@ model = build_model(
     adjacency=adj,
 )
 
-# Setup trainer
-trainer = Trainer(model=model)
+# Create metrics
+metrics = [
+    WildfireAccuracy(threshold=0.5),
+    WildfirePrecision(threshold=0.5),
+    WildfireRecall(threshold=0.5),
+    WildfireF1Score(threshold=0.5),
+    CountyRiskCoverage(threshold=0.5),
+]
+
+# Setup trainer with metrics
+trainer = Trainer(model=model, metrics=metrics)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = torch.nn.BCEWithLogitsLoss()
 
 # Train
-print("Starting training...")
+print("Starting training with metrics...")
 trainer.fit(
     bundle, 
     optimizer=optimizer, 
     loss_fn=loss_fn, 
-    max_epochs=2, 
+    max_epochs=5, 
     batch_size=8, 
     collate_fn=graph_collate
 )
 
-# Test inference
-print("\nTesting inference...")
-with torch.no_grad():
-    test_x = x[:1]
-    logits = model(test_x, adjacency=adj)
-    probs = torch.sigmoid(logits)
-    print(f"✓ Inference works! Probabilities shape: {probs.shape}")
-    print(f"✓ Probability range: [{probs.min():.3f}, {probs.max():.3f}]")
-
-print("\n✅ ConvLEM training test PASSED!")
+print("\n✅ Training with custom metrics PASSED!")
