@@ -274,50 +274,22 @@
 <h1>pyhazards.models package<a class="headerlink" href="#pyhazards-models-package" title="Link to this heading">¶</a></h1>
 <section id="model-category">
 <h2>Model Category<a class="headerlink" href="#model-category" title="Link to this heading">¶</a></h2>
-<section id="wildfire">
-<h3>Wildfire<a class="headerlink" href="#wildfire" title="Link to this heading">¶</a></h3>
-<div class="table-wrapper colwidths-given dataset-list docutils container">
-<table class="dataset-list docutils align-default">
-<colgroup>
-<col style="width: 30.0%" />
-<col style="width: 70.0%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Model</p></th>
-<th class="head"><p>Description</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><a class="reference internal" href="../modules/models_wildfire_aspp.html"><span class="doc">CNN-ASPP</span></a></p></td>
-<td><p>Explainable CNN-ASPP model for next-day wildfire spread prediction.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../modules/models_wildfire_fpa.html"><span class="doc">DNN-LSTM-AutoEncoder</span></a></p></td>
-<td><p>Two-stage FPA-FOD framework with a DNN stage for cause/size prediction and an LSTM + autoencoder stage for weekly wildfire forecasting.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
+<section id="cnn-aspp">
+<h3>CNN-ASPP<a class="headerlink" href="#cnn-aspp" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../modules/models_wildfire_aspp.html"><span class="doc">CNN-ASPP</span></a></p>
+<p>Explainable CNN-ASPP model for next-day wildfire spread prediction.</p>
 </section>
-<section id="flood">
-<h3>Flood<a class="headerlink" href="#flood" title="Link to this heading">¶</a></h3>
-<div class="table-wrapper colwidths-given dataset-list docutils container">
-<table class="dataset-list docutils align-default">
-<colgroup>
-<col style="width: 30.0%" />
-<col style="width: 70.0%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Model</p></th>
-<th class="head"><p>Description</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><a class="reference internal" href="../modules/models_hydrographnet.html"><span class="doc">HydroGraphNet</span></a></p></td>
-<td><p>Physics-informed graph neural network for flood forecasting on irregular meshes.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
+<section id="dnn-lstm-autoencoder">
+<h3>DNN-LSTM-AutoEncoder<a class="headerlink" href="#dnn-lstm-autoencoder" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../modules/models_wildfire_fpa.html"><span class="doc">DNN-LSTM-AutoEncoder</span></a></p>
+<p>Two-stage FPA-FOD framework with a DNN stage for cause/size prediction and an
+LSTM + autoencoder stage for weekly wildfire forecasting.</p>
+</section>
+<section id="hydrographnet">
+<h3>HydroGraphNet<a class="headerlink" href="#hydrographnet" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../modules/models_hydrographnet.html"><span class="doc">HydroGraphNet</span></a></p>
+<p>Physics-informed graph neural network for flood forecasting on irregular
+meshes.</p>
 </section>
 </section>
 <section id="submodules">
@@ -874,8 +846,9 @@ This delegates to registry metadata to keep a consistent interface.</p>
             <ul>
 <li><a class="reference internal" href="#">pyhazards.models package</a><ul>
 <li><a class="reference internal" href="#model-category">Model Category</a><ul>
-<li><a class="reference internal" href="#wildfire">Wildfire</a></li>
-<li><a class="reference internal" href="#flood">Flood</a></li>
+<li><a class="reference internal" href="#cnn-aspp">CNN-ASPP</a></li>
+<li><a class="reference internal" href="#dnn-lstm-autoencoder">DNN-LSTM-AutoEncoder</a></li>
+<li><a class="reference internal" href="#hydrographnet">HydroGraphNet</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>

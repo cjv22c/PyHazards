@@ -9,7 +9,7 @@ PyHazards provides a lightweight, extensible model architecture with:
 - Backbones for common data types: MLP (tabular), CNN patch encoder (raster), temporal encoder (time-series).
 - Task heads: classification, regression, segmentation.
 - A registry-driven builder so you can construct built-ins by name or register your own.
-- Hazard-focused implementations such as ``wildfire_aspp``, ``wildfire_fpa``, and ``hydrographnet``.
+- Hazard-focused implementations for wildfire, flood, earthquake, and more.
 
 Model
 -----

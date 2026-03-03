@@ -4,33 +4,28 @@ pyhazards.models package
 Model Category
 --------------
 
-Wildfire
+CNN-ASPP
 ~~~~~~~~
 
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-   :class: dataset-list
+:doc:`CNN-ASPP </modules/models_wildfire_aspp>`
 
-   * - Model
-     - Description
-   * - :doc:`CNN-ASPP </modules/models_wildfire_aspp>`
-     - Explainable CNN-ASPP model for next-day wildfire spread prediction.
-   * - :doc:`DNN-LSTM-AutoEncoder </modules/models_wildfire_fpa>`
-     - Two-stage FPA-FOD framework with a DNN stage for cause/size prediction and an LSTM + autoencoder stage for weekly wildfire forecasting.
+Explainable CNN-ASPP model for next-day wildfire spread prediction.
 
-Flood
-~~~~~
+DNN-LSTM-AutoEncoder
+~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-   :class: dataset-list
+:doc:`DNN-LSTM-AutoEncoder </modules/models_wildfire_fpa>`
 
-   * - Model
-     - Description
-   * - :doc:`HydroGraphNet </modules/models_hydrographnet>`
-     - Physics-informed graph neural network for flood forecasting on irregular meshes.
+Two-stage FPA-FOD framework with a DNN stage for cause/size prediction and an
+LSTM + autoencoder stage for weekly wildfire forecasting.
+
+HydroGraphNet
+~~~~~~~~~~~~~
+
+:doc:`HydroGraphNet </modules/models_hydrographnet>`
+
+Physics-informed graph neural network for flood forecasting on irregular
+meshes.
 
 Submodules
 ----------
