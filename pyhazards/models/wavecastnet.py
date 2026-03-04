@@ -520,4 +520,10 @@ class WavefieldMetrics:
             "RFNE": WavefieldMetrics.rfne(pred, target),
         }
 
-__all__ = ["WaveCastNet", "ConvLEMCell", "wavecastnet_builder"]
+__all__ = [
+    "WaveCastNet",
+    "ConvLEMCell",
+    "wavecastnet_builder",
+    "WaveCastNetLoss",
+    "WavefieldMetrics",
+]
