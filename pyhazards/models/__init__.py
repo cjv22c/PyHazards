@@ -9,6 +9,7 @@ from .wildfire_mamba import WildfireMamba, wildfire_mamba_builder
 from .wildfire_aspp import WildfireASPP, TverskyLoss, wildfire_aspp_builder
 from .cnn_aspp import WildfireCNNASPP, cnn_aspp_builder
 from .hydrographnet import HydroGraphNet, HydroGraphNetLoss, hydrographnet_builder
+from .wavecastnet import WaveCastNet, ConvLEMCell, wavecastnet_builder
 
 
 __all__ = [
