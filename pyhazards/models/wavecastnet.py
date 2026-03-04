@@ -11,10 +11,6 @@ class ConvLEMCell(nn.Module):
     """
     Convolutional Long Expressive Memory cell.
     
-    Maintains two states:
-    - h (hidden state): Short-term activations
-    - c (memory state): Long-term memory with controlled decay
-    
     Args:
         in_channels: Input feature channels
         out_channels: Hidden/memory state channels
@@ -400,10 +396,6 @@ def wavecastnet_builder(
 class WaveCastNetLoss(nn.Module):
     """
     Huber loss for wavefield forecasting as described in WaveCastNet paper (Eq. 3-4).
-    
-    The Huber loss combines L1 and L2 loss for robustness:
-    - L2 loss (quadratic) for small errors: smooth gradients
-    - L1 loss (linear) for large errors: reduces impact of outliers
     
     Args:
         delta: Threshold parameter (default: 1.0)
