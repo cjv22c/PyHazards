@@ -9,7 +9,6 @@ from .wildfire_mamba import WildfireMamba, wildfire_mamba_builder
 from .wildfire_aspp import WildfireASPP, TverskyLoss, wildfire_aspp_builder
 from .cnn_aspp import WildfireCNNASPP, cnn_aspp_builder
 from .hydrographnet import HydroGraphNet, HydroGraphNetLoss, hydrographnet_builder
-from .wavecastnet import WaveCastNet, ConvLEMCell, wavecastnet_builder
 
 __all__ = [
     # Core API
@@ -40,9 +39,6 @@ __all__ = [
     "HydroGraphNet",
     "HydroGraphNetLoss",
     "hydrographnet_builder",
-    "WaveCastNet",
-    "ConvLEMCell",
-    "wavecastnet_builder",
 ]
 
 # -------------------------------------------------
@@ -127,18 +123,5 @@ register_model(
         "hidden_dim": 64,
         "harmonics": 5,
         "num_gn_blocks": 5,
-    },
-)
-
-register_model(
-    "wavecastnet",
-    wavecastnet_builder,
-    defaults={
-        "hidden_dim": 144,
-        "num_layers": 2,
-        "kernel_size": 3,
-        "dt": 1.0,
-        "activation": "tanh",
-        "dropout": 0.1,
     },
 )
